@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2FA Tool - Gmail Check</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="gmail.png">
+</head>
+
+<body>
+
+    <header>
+        <a href="index.html" class="brand">
+            <i class="fab fa-google"></i> Gmail Check
+        </a>
+        <div class="controls">
+            <nav>
+                <a href="index.html" class="nav-link" data-i18n="checker">Checker</a>
+                <a href="tools.html" class="nav-link" data-i18n="split_gmail">Split Gmail</a>
+                <a href="twofa.html" class="nav-link" data-i18n="2fa_tool">2FA Tool</a>
+                <a href="notepad.html" class="nav-link" data-i18n="notepad">Notepad+</a>
+            </nav>
+            <select id="langSelect" class="lang-select">
+                <option value="en">🇺🇸 English</option>
+                <option value="zh">🇨🇳 中文</option>
+                <option value="ru">🇷🇺 Русский</option>
+            </select>
+            <button id="themeBtn" class="theme-btn" title="Toggle Theme"><i class="fas fa-moon"></i></button>
+        </div>
+    </header>
+
+    <main>
+        <div class="subtitle" style="text-align: center; margin: 0 auto 30px auto;" data-i18n="2fa_tool">
+            Generate 2FA codes for your accounts instantly.
+        </div>
+
+        <div class="card">
+            <h2 data-i18n="2fa_tool">2FA Code Generator</h2>
+
+            <div class="iframe-wrapper">
+                <iframe src="https://2facode.vercel.app/" allowfullscreen></iframe>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div style="margin-bottom: 16px;">
+            <a href="https://t.me/GmailTrust247" target="_blank" class="social-link">
+                <i class="fab fa-telegram"></i> <span data-i18n="support">Support</span>
+            </a>
+        </div>
+        &copy; 2024 Gmail Check. All rights reserved.
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>

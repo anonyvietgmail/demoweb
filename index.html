@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gmail Check - Google Account Checker</title>
+    <!-- Favicon: Updated to logo.png -->
+    <link rel="icon" type="image/png" sizes="32x32" href="gmail.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- Advertising Sidebars -->
+    <div class="ad-sidebar ad-left">
+        <a href="#" class="ad-box" title="Advertise Here">
+            <img src="https://via.placeholder.com/160x600?text=Ad+Space" alt="Ad Left">
+        </a>
+    </div>
+
+    <div class="ad-sidebar ad-right">
+        <a href="#" class="ad-box" title="Advertise Here">
+            <img src="https://via.placeholder.com/160x600?text=Ad+Space" alt="Ad Right">
+        </a>
+    </div>
+
+    <header>
+        <!-- Updated Brand Icon -->
+        <a href="index.html" class="brand">
+            <i class="fab fa-google"></i> Gmail Check
+        </a>
+
+        <div class="controls">
+            <!-- Navigation -->
+            <nav>
+                <a href="index.html" class="nav-link" data-i18n="checker">Checker</a>
+                <a href="tools.html" class="nav-link" data-i18n="split_gmail">Split Gmail</a>
+                <a href="twofa.html" class="nav-link" data-i18n="2fa_tool">2FA Tool</a>
+                <a href="notepad.html" class="nav-link" data-i18n="notepad">Notepad+</a>
+            </nav>
+
+            <!-- Language Flags Selector -->
+            <select id="langSelect" class="lang-select" title="Select Language">
+                <option value="en">🇺🇸</option>
+                <option value="zh">🇨🇳</option>
+                <option value="ru">🇷🇺</option>
+            </select>
+
+            <button id="themeBtn" class="theme-btn" title="Toggle Theme">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <div class="subtitle" data-i18n="subtitle" style="text-align: center; margin: 0 auto 30px auto;">
+            Check your Google accounts for abnormalities without passwords. Safe, fast, and convenient.
+        </div>
+
+        <div class="stats-container">
+            <div class="stat-card">
+                <span class="stat-value" id="totalAccounts">0</span>
+                <span class="stat-label" data-i18n="total">Total</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value" style="color: var(--primary-color);" id="checkedCount">0</span>
+                <span class="stat-label" data-i18n="checked">Checked</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value" style="color: var(--text-secondary);" id="remainingCount">0</span>
+                <span class="stat-label" data-i18n="remaining">Remaining</span>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <!-- Left Column: Input -->
+            <div class="card">
+                <h2 data-i18n="account_list">Account List</h2>
+
+                <!-- Info Helper -->
+                <div class="helper-text">
+                    <i class="fas fa-info-circle" style="margin-top: 2px;"></i>
+                    <span>
+                        <span data-i18n="helper_text_1">One account per line, </span>
+                        <strong data-i18n="helper_text_2">NO PASSWORD REQUIRED</strong>
+                        <span data-i18n="helper_text_3">. For convenience, characters after @gmail.com in each line will
+                            be ignored automatically.</span>
+                    </span>
+                </div>
+
+                <div class="helper-text" style="background: rgba(255, 149, 0, 0.1); color: var(--warning-color);">
+                    <i class="fas fa-wrench" style="margin-top: 2px;"></i>
+                    <span>
+                        <span data-i18n="split_tool_msg">Can't separate Gmails and Password?</span>
+                        <a href="tools.html" class="helper-link" data-i18n="split_tool_link">Use our Split Email
+                            Tool</a>
+                    </span>
+                </div>
+
+                <div class="file-upload" id="fileUpload">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <div style="font-weight: 500;" data-i18n="upload_text">Click or Drop TXT File</div>
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;"
+                        data-i18n="supports_large">Supports larger lists</div>
+                    <input type="file" id="fileInput" accept=".txt" style="display: none;">
+                </div>
+
+                <textarea id="accountList" data-i18n="account_list"
+                    placeholder="Paste your accounts here...&#10;example1@gmail.com&#10;example2@gmail.com"></textarea>
+
+                <div style="margin: 16px 0;">
+                    <label
+                        style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: block;"
+                        data-i18n="checking_speed">CHECKING SPEED</label>
+                    <div class="mode-selector">
+                        <div class="mode-btn active" id="slowMode" data-i18n="slow_mode">Slow (Realtime)</div>
+                        <div class="mode-btn" id="fastMode" data-i18n="fast_mode">Fast (Turbo)</div>
+                    </div>
+                </div>
+
+                <div class="check-group">
+                    <button class="btn" id="checkBtn" data-i18n="check_btn">
+                        Check Accounts
+                    </button>
+                    <!-- Stop Button -->
+                    <button class="btn btn-danger" id="stopBtn">
+                        <i class="fas fa-stop"></i> Stop
+                    </button>
+                </div>
+
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div class="progress-text" id="progressText">0%</div>
+            </div>
+
+            <!-- Right Column: Results -->
+            <div class="card">
+                <h2 data-i18n="results">Results</h2>
+
+                <!-- Summary Rows -->
+                <div class="result-row">
+                    <span class="label" data-i18n="good">Good / Live</span>
+                    <div class="actions">
+                        <span class="count-badge bg-success" id="goodCount">0</span>
+                        <button class="action-btn" title="Copy" data-type="good" data-action="copy"><i
+                                class="fas fa-copy"></i></button>
+                        <button class="action-btn" title="Download" data-type="good" data-action="download"><i
+                                class="fas fa-download"></i></button>
+                    </div>
+                </div>
+                <div class="result-row">
+                    <span class="label" data-i18n="verified">Verified</span>
+                    <div class="actions">
+                        <span class="count-badge bg-warning" id="verifiedCount">0</span>
+                        <button class="action-btn" title="Copy" data-type="verified" data-action="copy"><i
+                                class="fas fa-copy"></i></button>
+                        <button class="action-btn" title="Download" data-type="verified" data-action="download"><i
+                                class="fas fa-download"></i></button>
+                    </div>
+                </div>
+                <div class="result-row">
+                    <span class="label" data-i18n="disabled">Disabled</span>
+                    <div class="actions">
+                        <span class="count-badge bg-danger" id="disabledCount">0</span>
+                        <button class="action-btn" title="Copy" data-type="disabled" data-action="copy"><i
+                                class="fas fa-copy"></i></button>
+                        <button class="action-btn" title="Download" data-type="disabled" data-action="download"><i
+                                class="fas fa-download"></i></button>
+                    </div>
+                </div>
+                <div class="result-row">
+                    <span class="label" data-i18n="not_exist">Not Exist</span>
+                    <div class="actions">
+                        <span class="count-badge bg-warning" id="notExistCount">0</span>
+                        <button class="action-btn" title="Copy" data-type="not-exist" data-action="copy"><i
+                                class="fas fa-copy"></i></button>
+                        <button class="action-btn" title="Download" data-type="not-exist" data-action="download"><i
+                                class="fas fa-download"></i></button>
+                    </div>
+                </div>
+                <div class="result-row">
+                    <span class="label" data-i18n="unknown">Unknown</span>
+                    <div class="actions">
+                        <span class="count-badge bg-neutral" id="unknownCount">0</span>
+                        <button class="action-btn" title="Copy" data-type="unknown" data-action="copy"><i
+                                class="fas fa-copy"></i></button>
+                        <button class="action-btn" title="Download" data-type="unknown" data-action="download"><i
+                                class="fas fa-download"></i></button>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 24px;" data-i18n="detailed_log">Detailed Log</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th data-i18n="email_col">Email</th>
+                                <th data-i18n="status_col">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsBody">
+                            <!-- Results here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div style="margin-bottom: 16px;">
+            <a href="https://www.dropbox.com/scl/fi/rf11omwhqwne2o641rfby/How-to-use.mp4?rlkey=duqk5d4q01p1b5kdpkl716fdg&st=e9576yv2&dl=0"
+                target="_blank" class="social-link" data-i18n="how_to_use">
+                <i class="fas fa-play-circle"></i> How to use
+            </a>
+            <a href="https://t.me/GmailTrust247" target="_blank" class="social-link" style="margin-left: 8px;">
+                <i class="fab fa-telegram"></i> <span data-i18n="support">Support</span>
+            </a>
+        </div>
+        &copy; 2024 Gmail Check. All rights reserved.
+    </footer>
+
+    <script src="js/app.js"></script>
+    <script src="js/checker.js"></script>
+</body>
+
+</html>
