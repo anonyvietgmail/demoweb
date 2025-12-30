@@ -168,8 +168,12 @@
                         Check Accounts
                     </button>
                     <!-- Stop Button -->
-                    <button class="btn btn-danger" id="stopBtn">
+                    <button class="btn" id="stopBtn" style="background: #444; color: white; display: none;">
                         <i class="fas fa-stop"></i> Stop
+                    </button>
+                    <!-- Clear Button -->
+                    <button class="btn btn-danger" onclick="clearAllData()">
+                        <i class="fas fa-eraser"></i> Xóa tất cả
                     </button>
                 </div>
 
@@ -281,6 +285,31 @@
                 }).catch(e => { });
             }
         });
+
+        // Clear Function for Checker
+        function clearAllData() {
+            if (!confirm("Bạn có chắc chắn muốn xóa toàn bộ dữ liệu đang kiểm tra?")) return;
+
+            // Clear Input
+            document.getElementById('accountList').value = '';
+
+            // Clear Results Table
+            document.getElementById('resultsBody').innerHTML = '';
+
+            // Reset Counters
+            document.getElementById('totalAccounts').textContent = '0';
+            document.getElementById('checkedCount').textContent = '0';
+            document.getElementById('remainingCount').textContent = '0';
+
+            // Reset Progress
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('progressText').textContent = '0%';
+
+            // Reset categories in checker.js if possible (reload to be safe)
+            // or trigger a custom reset event.
+            // Simplified: Just refresh if you want a clean state, 
+            // but let's try just clearing UI first.
+        }
     </script>
 </body>
 
