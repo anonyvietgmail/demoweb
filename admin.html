@@ -90,25 +90,45 @@
             <button onclick="login()" class="btn">Verify & Login</button>
         </div>
 
-        <!-- Dashboard Section -->
-        <div id="dashboardSection" class="dashboard">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-                <h1>System Activity Logs</h1>
-                <div class="stats-badge" id="visitorStats">Today's Visitors: 0</div>
+        <div style="display: flex; gap: 20px; margin-bottom: 30px;">
+            <div class="card" style="flex: 1;">
+                <h2 style="margin-bottom: 15px;"><i class="fas fa-ad"></i> Banner Settings</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <label>Left Banner Image URL</label>
+                        <input type="text" id="leftImg" class="lang-select" style="width:100%; margin-top:5px;">
+                        <label style="margin-top:10px; display:block;">Left Banner Link</label>
+                        <input type="text" id="leftLink" class="lang-select" style="width:100%; margin-top:5px;">
+                    </div>
+                    <div>
+                        <label>Right Banner Image URL</label>
+                        <input type="text" id="rightImg" class="lang-select" style="width:100%; margin-top:5px;">
+                        <label style="margin-top:10px; display:block;">Right Banner Link</label>
+                        <input type="text" id="rightLink" class="lang-select" style="width:100%; margin-top:5px;">
+                    </div>
+                </div>
+                <button onclick="saveSettings()" class="btn"
+                    style="margin-top: 20px; background: var(--primary-color);">
+                    <i class="fas fa-save"></i> Save Banner Settings
+                </button>
             </div>
 
-            <div class="check-group" style="margin-bottom: 20px;">
-                <button onclick="fetchLogs()" class="btn" style="flex: 1;"><i class="fas fa-sync"></i> Refresh
-                    Logs</button>
-                <button onclick="clearLogs()" class="btn btn-danger" style="flex: 1; display: block;"><i
-                        class="fas fa-trash-alt"></i> Clear All Logs</button>
-            </div>
-
-            <div id="logList" class="log-container">
-                <!-- Logs will be injected here -->
-                <div style="padding: 40px; text-align: center; color: var(--text-secondary);">No activity logs found.
+            <div class="card" style="width: 300px;">
+                <h2 style="margin-bottom: 15px;"><i class="fas fa-chart-bar"></i> Quick Stats</h2>
+                <div class="stats-badge" id="visitorStats" style="width: 100%; text-align: center;">Visitors: 0</div>
+                <div class="check-group" style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+                    <button onclick="fetchLogs()" class="btn" style="width: 100%;"><i class="fas fa-sync"></i> Refresh
+                        Logs</button>
+                    <button onclick="clearLogs()" class="btn btn-danger" style="width: 100%;"><i
+                            class="fas fa-trash-alt"></i> Clear Logs</button>
                 </div>
             </div>
+        </div>
+
+        <div id="logList" class="log-container">
+            <!-- Logs will be injected here -->
+            <div style="padding: 40px; text-align: center; color: var(--text-secondary);">No activity logs found.</div>
+        </div>
         </div>
     </main>
 
@@ -117,20 +137,63 @@
 
         async function login() {
             const pass = document.getElementById('adminPassword').value;
+            try {
+                const res = await fetch('/api/system', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'admin_get_logs', password: pass })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    adminPass = pass;
+                    document.getElementById('loginSection').style.display = 'none';
+                    document.getElementById('dashboardSection').style.display = 'block';
+                    renderLogs(data.logs, data.visitorCount);
+                    fetchSettings(); // Load current banner URLs
+                } else {
+                    // Show the SPECIFIC error message from the server
+                    alert(data.message || "Invalid 2FA Code");
+                }
+            } catch (e) {
+                alert("Connection error to API");
+            }
+        }
+
+        async function fetchSettings() {
             const res = await fetch('/api/system', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'admin_get_logs', password: pass })
+                body: JSON.stringify({ action: 'get_settings' })
+            });
+            if (res.ok) {
+                const s = await res.json();
+                document.getElementById('leftImg').value = s.banner_left_img || '';
+                document.getElementById('leftLink').value = s.banner_left_link || '';
+                document.getElementById('rightImg').value = s.banner_right_img || '';
+                document.getElementById('rightLink').value = s.banner_right_link || '';
+            }
+        }
+
+        async function saveSettings() {
+            const settings = {
+                banner_left_img: document.getElementById('leftImg').value,
+                banner_left_link: document.getElementById('leftLink').value,
+                banner_right_img: document.getElementById('rightImg').value,
+                banner_right_link: document.getElementById('rightLink').value
+            };
+
+            const res = await fetch('/api/system', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'admin_update_settings', password: adminPass, data: { settings } })
             });
 
             if (res.ok) {
-                adminPass = pass;
-                const data = await res.json();
-                document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('dashboardSection').style.display = 'block';
-                renderLogs(data.logs, data.visitorCount);
+                alert("Settings saved successfully!");
             } else {
-                alert("Invalid 2FA Code");
+                alert("Failed to save settings.");
             }
         }
 

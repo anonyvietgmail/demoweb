@@ -73,6 +73,15 @@ export default async function handler(req, res) {
                 return res.status(200).json({ success: true });
             }
 
+            // Public Get Site Settings (Banners)
+            if (action === "get_settings") {
+                const { data: settings, error } = await supabase.from('site_settings').select('*');
+                if (error) throw error;
+                const config = {};
+                settings.forEach(s => config[s.key] = s.value);
+                return res.status(200).json(config);
+            }
+
             // Public Find Matches (for Fill Missing)
             if (action === "find_matches") {
                 const targetEmails = emails || data?.emails;
@@ -101,6 +110,9 @@ export default async function handler(req, res) {
 
             // Admin Actions (2FA Protected)
             if (action === "admin_get_logs") {
+                if (!SECRET_SEED) {
+                    return res.status(500).json({ message: "SERVER ERROR: TOTP_SEED environment variable is missing on this deployment." });
+                }
                 if (!verifyTOTP(password, SECRET_SEED)) {
                     return res.status(401).json({ message: "Unauthorized 2FA" });
                 }
@@ -133,13 +145,23 @@ export default async function handler(req, res) {
                 return res.status(200).json({ logs: formattedLogs, visitorCount: count });
             }
 
+            if (action === "admin_update_settings") {
+                if (!verifyTOTP(password, SECRET_SEED)) return res.status(401).json({ message: "Unauthorized" });
+                const { settings } = data; // { key: value, ... }
+                for (const key in settings) {
+                    await supabase.from('site_settings').upsert({ key: key, value: settings[key] });
+                }
+                return res.status(200).json({ success: true });
+            }
+
             if (action === "admin_clear_logs") {
+                if (!SECRET_SEED) return res.status(500).json({ message: "TOTP_SEED missing" });
                 if (!verifyTOTP(password, SECRET_SEED)) {
                     return res.status(401).json({ message: "Unauthorized 2FA" });
                 }
 
                 // Delete everything
-                await supabase.from('system_logs').delete().neq('id', 0); // Hack to delete all
+                await supabase.from('system_logs').delete().neq('id', 0);
                 await supabase.from('visitor_stats').delete().neq('date', '1970-01-01');
 
                 return res.status(200).json({ success: true });
