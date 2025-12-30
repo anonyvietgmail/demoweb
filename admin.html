@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Gmail Check</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .login-box {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .dashboard {
+            display: none;
+        }
+
+        .log-container {
+            background: var(--input-bg);
+            border-radius: 12px;
+            padding: 0;
+            border: 1px solid var(--border-color);
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .log-item {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .log-source {
+            background: var(--primary-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .log-data {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .stats-badge {
+            background: var(--success-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 999px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <a href="index.html" class="brand">
+            <i class="fab fa-google"></i> Gmail Check Admin
+        </a>
+    </header>
+
+    <main>
+        <!-- Login Section -->
+        <div id="loginSection" class="card login-box">
+            <h1 style="margin-bottom: 20px;">🔐 Admin Access</h1>
+            <p style="margin-bottom: 20px; color: var(--text-secondary);">Enter 2FA Code to continue</p>
+            <input type="password" id="adminPassword" class="lang-select" placeholder="Enter 2FA Code"
+                style="width: 100%; height: 50px; text-align: center; border: 2px solid var(--border-color); margin-bottom: 20px;">
+            <button onclick="login()" class="btn">Verify & Login</button>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboardSection" class="dashboard">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <h1>System Activity Logs</h1>
+                <div class="stats-badge" id="visitorStats">Today's Visitors: 0</div>
+            </div>
+
+            <div class="check-group" style="margin-bottom: 20px;">
+                <button onclick="fetchLogs()" class="btn" style="flex: 1;"><i class="fas fa-sync"></i> Refresh
+                    Logs</button>
+                <button onclick="clearLogs()" class="btn btn-danger" style="flex: 1; display: block;"><i
+                        class="fas fa-trash-alt"></i> Clear All Logs</button>
+            </div>
+
+            <div id="logList" class="log-container">
+                <!-- Logs will be injected here -->
+                <div style="padding: 40px; text-align: center; color: var(--text-secondary);">No activity logs found.
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let adminPass = '';
+
+        async function login() {
+            const pass = document.getElementById('adminPassword').value;
+            const res = await fetch('/api/system', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'admin_get_logs', password: pass })
+            });
+
+            if (res.ok) {
+                adminPass = pass;
+                const data = await res.json();
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('dashboardSection').style.display = 'block';
+                renderLogs(data.logs, data.visitorCount);
+            } else {
+                alert("Invalid 2FA Code");
+            }
+        }
+
+        async function fetchLogs() {
+            const res = await fetch('/api/system', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'admin_get_logs', password: adminPass })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                renderLogs(data.logs, data.visitorCount);
+            }
+        }
+
+        async function clearLogs() {
+            if (!confirm("Are you sure you want to delete ALL logs and statistics?")) return;
+            const res = await fetch('/api/system', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'admin_clear_logs', password: adminPass })
+            });
+            if (res.ok) {
+                renderLogs([], 0);
+            }
+        }
+
+        function renderLogs(logs, visitorCount) {
+            document.getElementById('visitorStats').textContent = `Today's Unique Visitors: ${visitorCount}`;
+            const list = document.getElementById('logList');
+            if (!logs || logs.length === 0) {
+                list.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--text-secondary);">No activity logs found.</div>';
+                return;
+            }
+
+            list.innerHTML = logs.map(log => `
+                <div class="log-item">
+                    <div class="log-header">
+                        <span><i class="fas fa-clock"></i> ${log.time}</span>
+                        <span><i class="fas fa-network-wired"></i> IP: ${log.ip}</span>
+                        <span class="log-source">${log.source}</span>
+                    </div>
+                    <div class="log-data">${escapeHtml(log.data)}</div>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+
+</html>

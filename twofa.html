@@ -8,6 +8,68 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="icon" type="image/png" sizes="32x32" href="gmail.png">
+    <style>
+        .auth-container {
+            text-align: center;
+            max-width: 500px;
+            margin: 40px auto;
+            padding: 40px;
+        }
+
+        .secret-input {
+            width: 100%;
+            height: 60px;
+            font-size: 20px;
+            text-align: center;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+            outline: none;
+        }
+
+        .secret-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .code-box {
+            font-size: 56px;
+            font-weight: 800;
+            color: var(--primary-color);
+            padding: 30px;
+            background: var(--input-bg);
+            border-radius: 16px;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 4px;
+            display: none;
+        }
+
+        .code-box:hover {
+            transform: scale(1.02);
+            background: var(--hover-bg);
+        }
+
+        .timer-bar {
+            height: 4px;
+            width: 100%;
+            background: var(--border-color);
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .timer-fill {
+            height: 100%;
+            background: var(--primary-color);
+            width: 100%;
+            transition: width 1s linear;
+        }
+    </style>
 </head>
 
 <body>
@@ -20,7 +82,7 @@
             <nav>
                 <a href="index.html" class="nav-link" data-i18n="checker">Checker</a>
                 <a href="tools.html" class="nav-link" data-i18n="split_gmail">Split Gmail</a>
-                <a href="twofa.html" class="nav-link" data-i18n="2fa_tool">2FA Tool</a>
+                <a href="twofa.html" class="nav-link active" data-i18n="2fa_tool">2FA Tool</a>
                 <a href="notepad.html" class="nav-link" data-i18n="notepad">Notepad+</a>
             </nav>
             <select id="langSelect" class="lang-select">
@@ -33,29 +95,142 @@
     </header>
 
     <main>
-        <div class="subtitle" style="text-align: center; margin: 0 auto 30px auto;" data-i18n="2fa_tool">
-            Generate 2FA codes for your accounts instantly.
-        </div>
+        <div class="card auth-container">
+            <h1 style="margin-bottom: 24px;">🔐 2FA Authenticator</h1>
+            <p style="color: var(--text-secondary); margin-bottom: 24px;">Enter your Secret Key to generate
+                authenticaton code.</p>
 
-        <div class="card">
-            <h2 data-i18n="2fa_tool">2FA Code Generator</h2>
+            <input type="text" id="secretKey" class="secret-input" placeholder="Enter Secret Key">
 
-            <div class="iframe-wrapper">
-                <iframe src="https://2facode.vercel.app/" allowfullscreen></iframe>
+            <div id="codeDisplay" class="code-box">000000</div>
+
+            <div class="timer-bar" id="timerBar">
+                <div class="timer-fill" id="timerFill"></div>
+            </div>
+
+            <div id="errorMsg" style="color: var(--danger-color); margin-top: 15px; display: none; font-size: 14px;">
+            </div>
+
+            <div style="margin-top: 30px; font-size: 14px; color: var(--text-secondary);">
+                <i class="fas fa-info-circle"></i> Click the code to copy.
             </div>
         </div>
     </main>
 
-    <footer>
-        <div style="margin-bottom: 16px;">
-            <a href="https://t.me/GmailTrust247" target="_blank" class="social-link">
-                <i class="fab fa-telegram"></i> <span data-i18n="support">Support</span>
-            </a>
-        </div>
-        &copy; 2024 Gmail Check. All rights reserved.
-    </footer>
-
     <script src="js/app.js"></script>
+    <script>
+        const secretInput = document.getElementById('secretKey');
+        const codeDisplay = document.getElementById('codeDisplay');
+        const timerBar = document.getElementById('timerBar');
+        const timerFill = document.getElementById('timerFill');
+        const errorMsg = document.getElementById('errorMsg');
+
+        // Base32 Decoder
+        function base32tohex(base32) {
+            const base32chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+            let bits = "";
+            let hex = "";
+            for (let i = 0; i < base32.length; i++) {
+                const val = base32chars.indexOf(base32.charAt(i).toUpperCase());
+                if (val >= 0) bits += val.toString(2).padStart(5, '0');
+            }
+            for (let i = 0; i + 4 <= bits.length; i += 4) {
+                hex += parseInt(bits.substr(i, 4), 2).toString(16);
+            }
+            return hex;
+        }
+
+        async function dec2hex(s) { return (s < 15.5 ? "0" : "") + Math.round(s).toString(16); }
+        async function hex2dec(s) { return parseInt(s, 16); }
+
+        async function getOTP(secret) {
+            try {
+                secret = secret.replace(/\s+/g, '');
+                if (!secret) return "";
+                const key = base32tohex(secret);
+                const epoch = Math.round(new Date().getTime() / 1000.0);
+                const time = leftpad(dec2hex(Math.floor(epoch / 30)), 16, "0");
+
+                // Note: Simplified JS TOTP for browser without heavy dependencies
+                // Using a public API for generation to ensure high compatibility if needed, 
+                // but let's try a local path first or use a library.
+                // For this environment, we will use a common JS TOTP library approach.
+                // Re-using the logic from the user's provided code but integrated.
+
+                return await generateTOTPFocal(secret);
+            } catch (e) { return "ERROR"; }
+        }
+
+        // Compliant Web Crypto TOTP
+        async function generateTOTPFocal(secret) {
+            const base32chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+            let bits = '';
+            const cleanSecret = secret.toUpperCase().replace(/[^A-Z2-7]/g, '');
+            for (let i = 0; i < cleanSecret.length; i++) {
+                bits += base32chars.indexOf(cleanSecret.charAt(i)).toString(2).padStart(5, '0');
+            }
+            const bytes = new Uint8Array(Math.floor(bits.length / 8));
+            for (let i = 0; i < bytes.length; i++) bytes[i] = parseInt(bits.substr(i * 8, 8), 2);
+
+            const epoch = Math.floor(Date.now() / 1000);
+            const counter = BigInt(Math.floor(epoch / 30));
+            const counterBytes = new Uint8Array(8);
+            new DataView(counterBytes.buffer).setBigUint64(0, counter, false);
+
+            const cryptoKey = await window.crypto.subtle.importKey(
+                'raw', bytes, { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']
+            );
+            const signature = await window.crypto.subtle.sign('HMAC', cryptoKey, counterBytes);
+            const hmac = new Uint8Array(signature);
+            const offset = hmac[hmac.length - 1] & 0x0f;
+            const code = ((hmac[offset] & 0x7f) << 24 | (hmac[offset + 1] & 0xff) << 16 | (hmac[offset + 2] & 0xff) << 8 | (hmac[offset + 3] & 0xff)) % 1000000;
+            return code.toString().padStart(6, '0');
+        }
+
+        function leftpad(str, len, pad) { return len + 1 >= str.length ? (new Array(len + 1 - str.length).join(pad) + str) : str; }
+
+        async function update() {
+            const secret = secretInput.value.trim();
+            if (!secret) {
+                codeDisplay.style.display = 'none';
+                timerBar.style.display = 'none';
+                return;
+            }
+
+            try {
+                const code = await generateTOTPFocal(secret);
+                codeDisplay.textContent = code;
+                codeDisplay.style.display = 'block';
+                timerBar.style.display = 'block';
+                errorMsg.style.display = 'none';
+
+                const seconds = 30 - (Math.floor(Date.now() / 1000) % 30);
+                timerFill.style.width = (seconds / 30 * 100) + '%';
+            } catch (e) {
+                errorMsg.textContent = "Invalid Secret Key Format";
+                errorMsg.style.display = 'block';
+                codeDisplay.style.display = 'none';
+                timerBar.style.display = 'none';
+            }
+        }
+
+        secretInput.addEventListener('input', update);
+        setInterval(update, 1000);
+
+        codeDisplay.addEventListener('click', () => {
+            navigator.clipboard.writeText(codeDisplay.textContent);
+            alert("Code Copied: " + codeDisplay.textContent);
+        });
+
+        // Load from URL if present
+        window.onload = () => {
+            const path = window.location.pathname.split('/').pop();
+            if (path && path !== 'twofa.html' && path !== 'twofa') {
+                secretInput.value = path;
+                update();
+            }
+        };
+    </script>
 </body>
 
 </html>

