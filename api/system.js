@@ -47,7 +47,7 @@ export default async function handler(req, res) {
 
     if (req.method === 'POST') {
         const { action, source, data, password, emails } = req.body;
-        const SECRET_SEED = process.env.TOTP_SEED || "67fjqwmrzared64uutpn6tupjyh3ifev";
+        const SECRET_SEED = process.env.TOTP_SEED;
 
         if (!supabase) {
             return res.status(500).json({ message: "Supabase not configured. Please add SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to Vercel environment variables." });
