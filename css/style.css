@@ -541,11 +541,11 @@ footer {
 }
 
 .ad-left {
-    left: 20px;
+    left: 10px;
 }
 
 .ad-right {
-    right: 20px;
+    right: 10px;
 }
 
 .ad-box {
@@ -578,8 +578,8 @@ footer {
     display: block;
 }
 
-/* Hide ads on smaller screens to prevent overlap */
-@media (max-width: 1600px) {
+/* Hide ads on very small screens to prevent overlap */
+@media (max-width: 1350px) {
     .ad-sidebar {
         display: none;
     }
