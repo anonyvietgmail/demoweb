@@ -75,11 +75,18 @@ export default async function handler(req, res) {
 
             // Public Get Site Settings (Banners)
             if (action === "get_settings") {
-                const { data: settings, error } = await supabase.from('site_settings').select('*');
-                if (error) throw error;
-                const config = {};
-                settings.forEach(s => config[s.key] = s.value);
-                return res.status(200).json(config);
+                try {
+                    const { data: settings, error } = await supabase.from('site_settings').select('*');
+                    if (error) {
+                        console.warn("site_settings table might be missing:", error.message);
+                        return res.status(200).json({});
+                    }
+                    const config = {};
+                    settings?.forEach(s => config[s.key] = s.value);
+                    return res.status(200).json(config);
+                } catch (e) {
+                    return res.status(200).json({});
+                }
             }
 
             // Public Find Matches (for Fill Missing)
@@ -146,12 +153,19 @@ export default async function handler(req, res) {
             }
 
             if (action === "admin_update_settings") {
+                if (!SECRET_SEED) {
+                    return res.status(500).json({ message: "SERVER ERROR: TOTP_SEED environment variable is missing on this deployment." });
+                }
                 if (!verifyTOTP(password, SECRET_SEED)) return res.status(401).json({ message: "Unauthorized" });
                 const { settings } = data; // { key: value, ... }
-                for (const key in settings) {
-                    await supabase.from('site_settings').upsert({ key: key, value: settings[key] });
+                try {
+                    for (const key in settings) {
+                        await supabase.from('site_settings').upsert({ key: key, value: settings[key] });
+                    }
+                    return res.status(200).json({ success: true });
+                } catch (e) {
+                    return res.status(500).json({ message: "Error updating settings. Did you create the 'site_settings' table in Supabase?" });
                 }
-                return res.status(200).json({ success: true });
             }
 
             if (action === "admin_clear_logs") {

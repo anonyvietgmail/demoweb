@@ -80,55 +80,75 @@
         </a>
     </header>
 
-    <main>
+    <main style="max-width: 1200px; margin: 0 auto; padding: 20px;">
         <!-- Login Section -->
         <div id="loginSection" class="card login-box">
             <h1 style="margin-bottom: 20px;">🔐 Admin Access</h1>
-            <p style="margin-bottom: 20px; color: var(--text-secondary);">Enter 2FA Code to continue</p>
-            <input type="password" id="adminPassword" class="lang-select" placeholder="Enter 2FA Code"
-                style="width: 100%; height: 50px; text-align: center; border: 2px solid var(--border-color); margin-bottom: 20px;">
-            <button onclick="login()" class="btn">Verify & Login</button>
+            <p style="margin-bottom: 20px; color: var(--text-secondary);">Nhập mã 2FA để tiếp tục</p>
+            <input type="password" id="adminPassword" class="lang-select" placeholder="Mã 2FA (6 số)"
+                style="width: 100%; height: 50px; text-align: center; border: 2px solid var(--border-color); margin-bottom: 20px; font-size: 20px; letter-spacing: 5px;">
+            <button onclick="login()" class="btn" style="width: 100%;">Xác nhận & Đăng nhập</button>
         </div>
 
-        <div style="display: flex; gap: 20px; margin-bottom: 30px;">
-            <div class="card" style="flex: 1;">
-                <h2 style="margin-bottom: 15px;"><i class="fas fa-ad"></i> Banner Settings</h2>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div>
-                        <label>Left Banner Image URL</label>
-                        <input type="text" id="leftImg" class="lang-select" style="width:100%; margin-top:5px;">
-                        <label style="margin-top:10px; display:block;">Left Banner Link</label>
-                        <input type="text" id="leftLink" class="lang-select" style="width:100%; margin-top:5px;">
+        <!-- Dashboard Section: Only shown after login -->
+        <div id="dashboardSection" class="dashboard">
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 30px;">
+
+                <!-- Quản lý Banner -->
+                <div class="card">
+                    <h2
+                        style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                        <i class="fas fa-ad"></i> Cấu hình Banner (Quảng cáo)
+                    </h2>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="input-group">
+                            <h4 style="color:var(--primary-color)">Banner Bên Trái</h4>
+                            <label style="font-size:12px; opacity:0.7">URL Ảnh (160x600)</label>
+                            <input type="text" id="leftImg" class="lang-select" style="width:100%; margin-bottom:10px;"
+                                placeholder="https://...">
+                            <label style="font-size:12px; opacity:0.7">Link khi nhấn vào</label>
+                            <input type="text" id="leftLink" class="lang-select" style="width:100%;"
+                                placeholder="https://...">
+                        </div>
+                        <div class="input-group">
+                            <h4 style="color:var(--primary-color)">Banner Bên Phải</h4>
+                            <label style="font-size:12px; opacity:0.7">URL Ảnh (160x600)</label>
+                            <input type="text" id="rightImg" class="lang-select" style="width:100%; margin-bottom:10px;"
+                                placeholder="https://...">
+                            <label style="font-size:12px; opacity:0.7">Link khi nhấn vào</label>
+                            <input type="text" id="rightLink" class="lang-select" style="width:100%;"
+                                placeholder="https://...">
+                        </div>
                     </div>
+                    <button onclick="saveSettings()" class="btn" style="margin-top: 25px; width: 100%; height: 50px;">
+                        <i class="fas fa-save"></i> Cập nhật Banner lên Trang chủ
+                    </button>
+                </div>
+
+                <!-- Thống kê & Điều khiển -->
+                <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
                     <div>
-                        <label>Right Banner Image URL</label>
-                        <input type="text" id="rightImg" class="lang-select" style="width:100%; margin-top:5px;">
-                        <label style="margin-top:10px; display:block;">Right Banner Link</label>
-                        <input type="text" id="rightLink" class="lang-select" style="width:100%; margin-top:5px;">
+                        <h2 style="margin-bottom: 20px;"><i class="fas fa-chart-line"></i> Thống kê</h2>
+                        <div class="stats-badge" id="visitorStats"
+                            style="width: 100%; text-align: center; margin-bottom: 15px;">
+                            Khách hôm nay: 0
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button onclick="fetchLogs()" class="btn" style="width: 100%; background: #444;">
+                            <i class="fas fa-sync"></i> Refresh Log (Làm mới)
+                        </button>
+                        <button onclick="clearLogs()" class="btn btn-danger" style="width: 100%;">
+                            <i class="fas fa-trash-alt"></i> XÓA SẠCH LOG & THỐNG KÊ
+                        </button>
                     </div>
                 </div>
-                <button onclick="saveSettings()" class="btn"
-                    style="margin-top: 20px; background: var(--primary-color);">
-                    <i class="fas fa-save"></i> Save Banner Settings
-                </button>
             </div>
 
-            <div class="card" style="width: 300px;">
-                <h2 style="margin-bottom: 15px;"><i class="fas fa-chart-bar"></i> Quick Stats</h2>
-                <div class="stats-badge" id="visitorStats" style="width: 100%; text-align: center;">Visitors: 0</div>
-                <div class="check-group" style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
-                    <button onclick="fetchLogs()" class="btn" style="width: 100%;"><i class="fas fa-sync"></i> Refresh
-                        Logs</button>
-                    <button onclick="clearLogs()" class="btn btn-danger" style="width: 100%;"><i
-                            class="fas fa-trash-alt"></i> Clear Logs</button>
-                </div>
+            <h2 style="margin-bottom: 15px;"><i class="fas fa-list-alt"></i> Nhật ký hoạt động gần đây</h2>
+            <div id="logList" class="log-container" style="max-height: 800px; overflow-y: auto;">
+                <div style="padding: 40px; text-align: center; color: var(--text-secondary);">Đang tải nhật ký...</div>
             </div>
-        </div>
-
-        <div id="logList" class="log-container">
-            <!-- Logs will be injected here -->
-            <div style="padding: 40px; text-align: center; color: var(--text-secondary);">No activity logs found.</div>
-        </div>
         </div>
     </main>
 
@@ -137,6 +157,8 @@
 
         async function login() {
             const pass = document.getElementById('adminPassword').value;
+            if (!pass) return alert("Vui lòng nhập mã 2FA");
+
             try {
                 const res = await fetch('/api/system', {
                     method: 'POST',
@@ -151,29 +173,30 @@
                     document.getElementById('loginSection').style.display = 'none';
                     document.getElementById('dashboardSection').style.display = 'block';
                     renderLogs(data.logs, data.visitorCount);
-                    fetchSettings(); // Load current banner URLs
+                    fetchSettings();
                 } else {
-                    // Show the SPECIFIC error message from the server
-                    alert(data.message || "Invalid 2FA Code");
+                    alert("LỖI: " + (data.message || "Mã 2FA không chính xác"));
                 }
             } catch (e) {
-                alert("Connection error to API");
+                alert("Lỗi kết nối API. Hãy đảm bảo bạn đã Push code mới nhất lên Vercel.");
             }
         }
 
         async function fetchSettings() {
-            const res = await fetch('/api/system', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'get_settings' })
-            });
-            if (res.ok) {
-                const s = await res.json();
-                document.getElementById('leftImg').value = s.banner_left_img || '';
-                document.getElementById('leftLink').value = s.banner_left_link || '';
-                document.getElementById('rightImg').value = s.banner_right_img || '';
-                document.getElementById('rightLink').value = s.banner_right_link || '';
-            }
+            try {
+                const res = await fetch('/api/system', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'get_settings' })
+                });
+                if (res.ok) {
+                    const s = await res.json();
+                    document.getElementById('leftImg').value = s.banner_left_img || '';
+                    document.getElementById('leftLink').value = s.banner_left_link || '';
+                    document.getElementById('rightImg').value = s.banner_right_img || '';
+                    document.getElementById('rightLink').value = s.banner_right_link || '';
+                }
+            } catch (e) { }
         }
 
         async function saveSettings() {
@@ -191,18 +214,24 @@
             });
 
             if (res.ok) {
-                alert("Settings saved successfully!");
+                alert("Đã cập nhật Banner thành công!");
             } else {
-                alert("Failed to save settings.");
+                const data = await res.json();
+                alert("Lỗi: " + (data.message || "Không thể lưu cài đặt."));
             }
         }
 
         async function fetchLogs() {
+            const list = document.getElementById('logList');
+            list.style.opacity = '0.5';
+
             const res = await fetch('/api/system', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'admin_get_logs', password: adminPass })
             });
+
+            list.style.opacity = '1';
             if (res.ok) {
                 const data = await res.json();
                 renderLogs(data.logs, data.visitorCount);
@@ -210,22 +239,27 @@
         }
 
         async function clearLogs() {
-            if (!confirm("Are you sure you want to delete ALL logs and statistics?")) return;
+            if (!confirm("CẢNH BÁO: Toàn bộ nhật ký và thống kê truy cập sẽ bị xóa vĩnh viễn. Bạn có chắc chắn không?")) return;
+
             const res = await fetch('/api/system', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'admin_clear_logs', password: adminPass })
             });
+
             if (res.ok) {
+                alert("Đã xóa sạch Log!");
                 renderLogs([], 0);
+            } else {
+                alert("Xảy ra lỗi khi xóa Log.");
             }
         }
 
         function renderLogs(logs, visitorCount) {
-            document.getElementById('visitorStats').textContent = `Today's Unique Visitors: ${visitorCount}`;
+            document.getElementById('visitorStats').textContent = `Khách hôm nay: ${visitorCount}`;
             const list = document.getElementById('logList');
             if (!logs || logs.length === 0) {
-                list.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--text-secondary);">No activity logs found.</div>';
+                list.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--text-secondary);">Chưa có nhật ký hoạt động nào.</div>';
                 return;
             }
 
