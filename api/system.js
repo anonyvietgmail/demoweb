@@ -169,16 +169,25 @@ export default async function handler(req, res) {
             }
 
             if (action === "admin_clear_logs") {
-                if (!SECRET_SEED) return res.status(500).json({ message: "TOTP_SEED missing" });
-                if (!verifyTOTP(password, SECRET_SEED)) {
-                    return res.status(401).json({ message: "Unauthorized 2FA" });
+                const seed = SECRET_SEED || process.env.TOTP_SEED;
+                if (!seed) return res.status(500).json({ message: "SERVER ERROR: TOTP_SEED environment variable is missing." });
+                if (!verifyTOTP(password, seed)) {
+                    return res.status(401).json({ message: "Invalid 2FA code." });
                 }
 
-                // Delete everything
-                await supabase.from('system_logs').delete().neq('id', 0);
-                await supabase.from('visitor_stats').delete().neq('date', '1970-01-01');
+                try {
+                    // Delete everything from system_logs and visitor_stats
+                    const deleteStats = await supabase.from('visitor_stats').delete().neq('date', '1970-01-01');
+                    const deleteLogs = await supabase.from('system_logs').delete().neq('id', 0);
 
-                return res.status(200).json({ success: true });
+                    if (deleteStats.error) throw deleteStats.error;
+                    if (deleteLogs.error) throw deleteLogs.error;
+
+                    return res.status(200).json({ success: true });
+                } catch (e) {
+                    console.error("Delete Error:", e);
+                    return res.status(500).json({ message: "Database connection error: " + e.message });
+                }
             }
 
             return res.status(400).json({ message: "Invalid action" });

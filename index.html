@@ -172,8 +172,9 @@
                         <i class="fas fa-stop"></i> Stop
                     </button>
                     <!-- Clear Button -->
-                    <button class="btn btn-danger" onclick="clearAllData()" style="display: flex !important;">
-                        <i class="fas fa-eraser"></i> Xóa tất cả
+                    <button class="btn btn-danger" onclick="clearAllData()" style="display: flex !important;"
+                        data-i18n="clear_all">
+                        <i class="fas fa-eraser"></i> Clear All
                     </button>
                 </div>
 
@@ -288,7 +289,7 @@
 
         // Clear Function for Checker
         function clearAllData() {
-            if (!confirm("Bạn có chắc chắn muốn xóa toàn bộ dữ liệu đang kiểm tra?")) return;
+            if (!confirm("Are you sure you want to clear all input and results?")) return;
 
             // Clear Input
             document.getElementById('accountList').value = '';
