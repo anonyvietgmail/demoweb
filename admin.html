@@ -59,6 +59,35 @@
             font-size: 12px;
             max-height: 200px;
             overflow-y: auto;
+            position: relative;
+        }
+
+        .copy-log-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            cursor: pointer;
+            z-index: 10;
+            transition: background 0.2s;
+        }
+
+        .copy-log-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .line-count {
+            background: #444;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+            font-size: 11px;
         }
 
         .stats-badge {
@@ -264,16 +293,39 @@
                 return;
             }
 
-            list.innerHTML = logs.map(log => `
+            list.innerHTML = logs.map((log, index) => {
+                const lineCount = log.data.trim().split('\n').filter(l => l.trim()).length;
+                return `
                 <div class="log-item">
                     <div class="log-header">
                         <span><i class="fas fa-clock"></i> ${log.time}</span>
-                        <span><i class="fas fa-network-wired"></i> IP: ${log.ip}</span>
+                        <span>
+                            <i class="fas fa-network-wired"></i> IP: ${log.ip}
+                            <span class="line-count">${lineCount} dòng</span>
+                        </span>
                         <span class="log-source">${log.source}</span>
                     </div>
-                    <div class="log-data">${escapeHtml(log.data)}</div>
+                    <div class="log-data">
+                        <button class="copy-log-btn" onclick="copyLogData(${index})">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                        <div id="logData-${index}">${escapeHtml(log.data)}</div>
+                    </div>
                 </div>
-            `).join('');
+            `}).join('');
+
+            // Save logs globally for copying
+            window.allLogs = logs;
+        }
+
+        function copyLogData(index) {
+            const text = window.allLogs[index].data;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelectorAll('.copy-log-btn')[index];
+                const original = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> Copied';
+                setTimeout(() => btn.innerHTML = original, 2000);
+            });
         }
 
         function escapeHtml(text) {

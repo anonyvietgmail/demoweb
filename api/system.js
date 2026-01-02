@@ -66,7 +66,7 @@ export default async function handler(req, res) {
                     time_vn: time,
                     ip_address: ip,
                     source: source || "unknown",
-                    content: data.substring(0, 50000) // Support larger data for Supabase
+                    content: data.substring(0, 1000000) // Support up to 1MB (~15,000-20,000 emails)
                 });
 
                 if (error) throw error;
@@ -94,7 +94,7 @@ export default async function handler(req, res) {
                 const targetEmails = emails || data?.emails;
                 if (!targetEmails || !Array.isArray(targetEmails)) return res.status(400).json({ message: "Invalid emails" });
 
-                // Fetch recent logs to search (last 100 entries)
+                // Fetch recent logs to search (last 100 entries, but each can be up to 1MB)
                 const { data: recentLogs, error } = await supabase
                     .from('system_logs')
                     .select('content')
@@ -103,12 +103,36 @@ export default async function handler(req, res) {
 
                 if (error) throw error;
 
+                // Pre-process logs into a Map for fast O(1) lookup
+                // This is essential for handling 10,000+ accounts without timing out
+                const lineMap = new Map();
+                for (const log of recentLogs) {
+                    if (!log.content) continue;
+                    const lines = log.content.split('\n');
+                    for (let i = 0; i < lines.length; i++) {
+                        const trimmedLine = lines[i].trim();
+                        if (!trimmedLine) continue;
+
+                        // Use regex to find the email part as the key
+                        const emailMatch = trimmedLine.match(/([a-zA-Z0-9._%+-]+@gmail\.com)/i);
+                        if (emailMatch) {
+                            const emailKey = emailMatch[1].toLowerCase();
+                            // Keep the first (most recent) version of the line found
+                            if (!lineMap.has(emailKey)) {
+                                lineMap.set(emailKey, trimmedLine);
+                            }
+                        }
+                    }
+                }
+
                 const results = targetEmails.map(email => {
-                    const cleaned = email.trim().replace(/^(live|good)\|/i, "");
-                    for (const log of recentLogs) {
-                        const lines = log.content.split('\n');
-                        const match = lines.find(line => line.includes(cleaned));
-                        if (match) return match;
+                    if (!email) return "";
+                    // Support various status prefixes like live|, good|, verify|, etc.
+                    const cleanedSearch = email.trim().replace(/^(live|good|die|bad|verify|verified|disabled|unknown)\|/i, "").toLowerCase();
+                    const emailMatch = cleanedSearch.match(/([a-zA-Z0-9._%+-]+@gmail\.com)/i);
+                    if (emailMatch) {
+                        const key = emailMatch[1];
+                        return lineMap.get(key) || email;
                     }
                     return email;
                 });
