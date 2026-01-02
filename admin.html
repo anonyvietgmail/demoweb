@@ -62,23 +62,18 @@
             position: relative;
         }
 
-        .copy-log-btn {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 10px;
-            cursor: pointer;
-            z-index: 10;
-            transition: background 0.2s;
+        .log-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
         }
 
-        .copy-log-btn:hover {
-            background: rgba(255, 255, 255, 0.4);
+        .btn-log {
+            width: auto !important;
+            padding: 6px 15px !important;
+            font-size: 12px !important;
+            height: auto !important;
+            border-radius: 6px !important;
         }
 
         .line-count {
@@ -305,27 +300,44 @@
                         </span>
                         <span class="log-source">${log.source}</span>
                     </div>
-                    <div class="log-data">
-                        <button class="copy-log-btn" onclick="copyLogData(${index})">
+                    <div class="log-actions">
+                        <button class="btn btn-log" onclick="copyLogData(${index})" style="background: #555;">
                             <i class="fas fa-copy"></i> Copy
                         </button>
+                        <button class="btn btn-log" onclick="downloadLogData(${index})" style="background: var(--primary-color);">
+                            <i class="fas fa-download"></i> Tải TXT
+                        </button>
+                    </div>
+                    <div class="log-data">
                         <div id="logData-${index}">${escapeHtml(log.data)}</div>
                     </div>
                 </div>
             `}).join('');
 
-            // Save logs globally for copying
+            // Save logs globally for actions
             window.allLogs = logs;
         }
 
         function copyLogData(index) {
             const text = window.allLogs[index].data;
             navigator.clipboard.writeText(text).then(() => {
-                const btn = document.querySelectorAll('.copy-log-btn')[index];
+                const btn = document.querySelectorAll('.btn-log')[index * 2]; // index * 2 because 2 buttons per log
                 const original = btn.innerHTML;
-                btn.innerHTML = '<i class="fas fa-check"></i> Copied';
+                btn.innerHTML = '<i class="fas fa-check"></i> Đã Copy';
                 setTimeout(() => btn.innerHTML = original, 2000);
             });
+        }
+
+        function downloadLogData(index) {
+            const log = window.allLogs[index];
+            const blob = new Blob([log.data], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const fileName = `log_${log.source}_${log.time.replace(/[:/ ]/g, '_')}.txt`;
+            a.href = url;
+            a.download = fileName;
+            a.click();
+            URL.revokeObjectURL(url);
         }
 
         function escapeHtml(text) {
